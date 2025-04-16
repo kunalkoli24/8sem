@@ -1,0 +1,56 @@
+HPC (Implement Min, Max, Sum and Average)
+
+#include <iostream>
+#include <vector>
+#include <omp.h>
+#include <climits> // For INT_MAX and INT_MIN
+#include <chrono>
+
+using namespace std;
+using namespace std::chrono;
+
+int main() {
+    int n;
+
+    
+    cout << "Enter the number of elements: ";
+    cin >> n;
+
+    vector<int> arr(n);
+
+        cout << "Enter " << n << " elements:\n";
+    for (int i = 0; i < n; i++) {
+        cin >> arr[i];
+    }
+
+    int minVal = INT_MAX;
+    int maxVal = INT_MIN;
+    long long sum = 0;
+    double avg = 0.0;
+
+    
+    auto start = high_resolution_clock::now();
+
+       #pragma omp parallel for reduction(min:minVal) reduction(max:maxVal) reduction(+:sum)
+    for (int i = 0; i < n; i++) {
+        minVal = min(minVal, arr[i]);
+        maxVal = max(maxVal, arr[i]);
+        sum += arr[i];
+    }
+
+    avg = static_cast<double>(sum) / n;
+
+    
+    auto stop = high_resolution_clock::now();
+    auto duration = duration_cast<milliseconds>(stop - start);
+
+    
+    cout << "\nParallel Reduction Results:\n";
+    cout << "Min: " << minVal << endl;
+    cout << "Max: " << maxVal << endl;
+    cout << "Sum: " << sum << endl;
+    cout << "Average: " << avg << endl;
+    cout << "Execution Time: " << duration.count() << " ms\n";
+
+    return 0;
+}

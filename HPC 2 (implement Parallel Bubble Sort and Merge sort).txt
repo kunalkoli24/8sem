@@ -1,0 +1,226 @@
+HPC 2 (implement Parallel Bubble Sort and Merge sort using OpenMP)
+
+#include <iostream> 
+#include <vector> 
+#include <omp.h> 
+#include <chrono> 
+using namespace std; 
+using namespace std::chrono; 
+void generateRandomArray(vector<int>& arr, int size) { 
+    for (int i = 0; i < size; i++) { 
+        arr[i] = rand() % 1000; // Random numbers between 0 and 999 
+    } 
+} 
+void bubbleSort(vector<int>& arr, int n) { 
+    for (int i = 0; i < n - 1; i++) { 
+        for (int j = 0; j < n - i - 1; j++) { 
+            if (arr[j] > arr[j + 1]) { 
+                swap(arr[j], arr[j + 1]); 
+            } 
+        } 
+    } 
+} 
+void parallelBubbleSort(vector<int>& arr, int n) { 
+    for (int i = 0; i < n - 1; i++) { 
+        #pragma omp parallel for 
+        for (int j = 0; j < n - i - 1; j++) { 
+            if (arr[j] > arr[j + 1]) { 
+                swap(arr[j], arr[j + 1]); 
+            } 
+        } 
+    } 
+} 
+void merge(vector<int>& arr, int left, int mid, int right) { 
+    int n1 = mid - left + 1; 
+    int n2 = right - mid; 
+    vector<int> L(n1), R(n2); 
+    for (int i = 0; i < n1; i++) L[i] = arr[left + i]; 
+    for (int i = 0; i < n2; i++) R[i] = arr[mid + 1 + i]; 
+    int i = 0, j = 0, k = left; 
+    while (i < n1 && j < n2) { 
+        arr[k++] = (L[i] <= R[j]) ? L[i++] : R[j++]; 
+    } 
+ 
+    while (i < n1) arr[k++] = L[i++]; 
+    while (j < n2) arr[k++] = R[j++]; 
+} 
+ 
+
+void mergeSort(vector<int>& arr, int left, int right) { 
+    if (left < right) { 
+        int mid = left + (right - left) / 2; 
+        mergeSort(arr, left, mid); 
+        mergeSort(arr, mid + 1, right); 
+        merge(arr, left, mid, right); 
+    } 
+} 
+ 
+
+void parallelMergeSort(vector<int>& arr, int left, int right) { 
+    if (left < right) { 
+        int mid = left + (right - left) / 2; 
+         
+        #pragma omp parallel sections 
+        { 
+            #pragma omp section 
+            parallelMergeSort(arr, left, mid); 
+ 
+            #pragma omp section 
+            parallelMergeSort(arr, mid + 1, right); 
+        } 
+ 
+        merge(arr, left, mid, right); 
+    } 
+} 
+ 
+int main() { 
+    int n = 10000;  
+    vector<int> arr1(n), arr2(n), arr3(n), arr4(n); 
+ 
+    generateRandomArray(arr1, n); 
+    arr2 = arr1; arr3 = arr1; arr4 = arr1; 
+ 
+     
+    auto start = high_resolution_clock::now(); 
+    bubbleSort(arr1, n); 
+    auto stop = high_resolution_clock::now(); 
+    auto seqBubbleTime = duration_cast<milliseconds>(stop - start).count(); 
+ 
+     
+    start = high_resolution_clock::now(); 
+    parallelBubbleSort(arr2, n); 
+    stop = high_resolution_clock::now(); 
+    auto parBubbleTime = duration_cast<milliseconds>(stop - start).count(); 
+ 
+start = high_resolution_clock::now(); 
+mergeSort(arr3, 0, n - 1); 
+stop = high_resolution_clock::now(); 
+auto seqMergeTime = duration_cast<milliseconds>(stop - start).count(); 
+ 
+start = high_resolution_clock::now(); 
+parallelMergeSort(arr4, 0, n - 1); 
+stop = high_resolution_clock::now(); 
+auto parMergeTime = duration_cast<milliseconds>(stop - start).count(); 
+ 
+cout << "Sorting Performance (Time in milliseconds):\n"; 
+cout << "Sequential Bubble Sort: " << seqBubbleTime << " ms\n"; 
+cout << "Parallel Bubble Sort: " << parBubbleTime << " ms\n"; 
+cout << "Sequential Merge Sort: " << seqMergeTime << " ms\n"; 
+cout << "Parallel Merge Sort: " << parMergeTime << " ms\n"; 
+return 0; 
+}
+
+taking input from user
+
+#include <iostream> 
+#include <vector> 
+#include <omp.h> 
+#include <chrono> 
+
+using namespace std; 
+using namespace std::chrono; 
+
+void takeUserInputArray(vector<int>& arr, int size) { 
+    cout << "Enter " << size << " elements:\n"; 
+    for (int i = 0; i < size; i++) { 
+        cin >> arr[i]; 
+    } 
+} 
+
+void bubbleSort(vector<int>& arr, int n) { 
+    for (int i = 0; i < n - 1; i++) { 
+        for (int j = 0; j < n - i - 1; j++) { 
+            if (arr[j] > arr[j + 1]) { 
+                swap(arr[j], arr[j + 1]); 
+            } 
+        } 
+    } 
+} 
+
+void parallelBubbleSort(vector<int>& arr, int n) { 
+    for (int i = 0; i < n - 1; i++) { 
+        #pragma omp parallel for 
+        for (int j = 0; j < n - i - 1; j++) { 
+            if (arr[j] > arr[j + 1]) { 
+                swap(arr[j], arr[j + 1]); 
+            } 
+        } 
+    } 
+} 
+
+void merge(vector<int>& arr, int left, int mid, int right) { 
+    int n1 = mid - left + 1; 
+    int n2 = right - mid; 
+    vector<int> L(n1), R(n2); 
+    for (int i = 0; i < n1; i++) L[i] = arr[left + i]; 
+    for (int i = 0; i < n2; i++) R[i] = arr[mid + 1 + i]; 
+    int i = 0, j = 0, k = left; 
+    while (i < n1 && j < n2) { 
+        arr[k++] = (L[i] <= R[j]) ? L[i++] : R[j++]; 
+    } 
+    while (i < n1) arr[k++] = L[i++]; 
+    while (j < n2) arr[k++] = R[j++]; 
+} 
+
+void mergeSort(vector<int>& arr, int left, int right) { 
+    if (left < right) { 
+        int mid = left + (right - left) / 2; 
+        mergeSort(arr, left, mid); 
+        mergeSort(arr, mid + 1, right); 
+        merge(arr, left, mid, right); 
+    } 
+} 
+
+void parallelMergeSort(vector<int>& arr, int left, int right) { 
+    if (left < right) { 
+        int mid = left + (right - left) / 2; 
+        #pragma omp parallel sections 
+        { 
+            #pragma omp section 
+            parallelMergeSort(arr, left, mid); 
+            #pragma omp section 
+            parallelMergeSort(arr, mid + 1, right); 
+        } 
+        merge(arr, left, mid, right); 
+    } 
+} 
+
+int main() { 
+    int n; 
+    cout << "Enter the size of the array: "; 
+    cin >> n; 
+
+    vector<int> arr1(n), arr2(n), arr3(n), arr4(n); 
+
+    takeUserInputArray(arr1, n); 
+    arr2 = arr1; arr3 = arr1; arr4 = arr1; 
+
+    auto start = high_resolution_clock::now(); 
+    bubbleSort(arr1, n); 
+    auto stop = high_resolution_clock::now(); 
+    auto seqBubbleTime = duration_cast<milliseconds>(stop - start).count(); 
+
+    start = high_resolution_clock::now(); 
+    parallelBubbleSort(arr2, n); 
+    stop = high_resolution_clock::now(); 
+    auto parBubbleTime = duration_cast<milliseconds>(stop - start).count(); 
+
+    start = high_resolution_clock::now(); 
+    mergeSort(arr3, 0, n - 1); 
+    stop = high_resolution_clock::now(); 
+    auto seqMergeTime = duration_cast<milliseconds>(stop - start).count(); 
+
+    start = high_resolution_clock::now(); 
+    parallelMergeSort(arr4, 0, n - 1); 
+    stop = high_resolution_clock::now(); 
+    auto parMergeTime = duration_cast<milliseconds>(stop - start).count(); 
+
+    cout << "\nSorting Performance (Time in milliseconds):\n"; 
+    cout << "Sequential Bubble Sort: " << seqBubbleTime << " ms\n"; 
+    cout << "Parallel Bubble Sort: " << parBubbleTime << " ms\n"; 
+    cout << "Sequential Merge Sort: " << seqMergeTime << " ms\n"; 
+    cout << "Parallel Merge Sort: " << parMergeTime << " ms\n"; 
+
+    return 0; 
+}
+
